@@ -1,0 +1,164 @@
+---
+title: "WK03_Reproducibility"
+author: "Isaac Sowah Badu"
+date: "2024-09-11"
+output:
+  pdf_document: default
+  word_document: default
+---
+
+```{r}
+rm(list=ls(all=TRUE))
+```
+
+
+
+#This helps to set the working directory
+```{r,include = TRUE, echo= TRUE}
+library(knitr)
+opts_knit$set(root.dir = "C:/Users/sowai23/Desktop/Year_2_First sem/R stats/Files/R-class-2024/WK03_Reproducibility")
+```
+
+
+
+
+```{r}
+#Creating the directory structure
+#creates several folders
+if (!file.exists('data')) dir.create('data') # creates the files if they do not exist
+if (!file.exists('src')) dir.create('src')
+if (!file.exists('analysis')) dir.create('analysis')
+if (!file.exists('figures')) dir.create('figures')
+if (!file.exists('report')) dir.create('report')
+```
+
+
+
+ 
+```{r}
+#Editing the dataframe
+df.t1<- read.csv(file="data/tempExperiment-raw.csv")
+head(df.t1)
+str(df.t1)
+```
+
+
+#Checkpoint 1: Is this data structure ready for analysis?
+#No the dataframe is not ready for analysis so we need work on it to make it ready. we can fix it by separating temperature treatment from population by using the function ‘strsplit’ to do this.
+
+
+```{r}
+#separating the temperature treatment from population ( eg. if I have two treatments attached this is how I separate them)
+a <- strsplit(as.character(df.t1$temp), split = '-')
+# note that without "as.character" it thinks the variable is a factor and won't work
+newvar <- matrix(unlist(a), ncol = 2, byrow = TRUE)
+head(newvar)
+```
+
+
+```{r}
+#sets the dataframe to a new variable so we can fix it
+df.t2 <- df.t1 # we set the dataframe to a new variable so we can fix it
+df.t2$temp <- newvar[,1]
+df.t2$pop <- newvar[,2]
+head(df.t2)
+```
+
+
+
+```{r}
+#Checkpoint 2.
+#Making ‘temp’ and ‘pop’ to have the correct levels.
+#The function sub to give ‘temp’ only numeric values and ‘pop’ only levels ‘pop1’ and ‘pop2
+df.t2$temp <- sub('ten', '10', df.t2$temp)
+df.t2$temp <- sub('twenty', '20', df.t2$temp)
+df.t2$pop <- sub('population ', 'pop', df.t2$pop)
+str(df.t2)
+
+#making sure all the objects in the dataframe are of the correct flavor. Use the function factor or as.numeric to do so.
+df.t2$temp <- factor(df.t2$temp)
+df.t2$pop <- factor(df.t2$pop)
+str(df.t2)
+write.csv(df.t2, 'data/tempExperiment_v2.csv')
+```
+
+
+```{r}
+source('src/EditDataframe.R')
+```
+
+#Checkpoint 3. Why are we doing this? This allows us to read and execute the R code from the EditDataframe script file.  How is it going to help us? It allows us to the reuse code across multiple projects without rewriting it. It also helps keep the script organized and clean.
+
+
+
+```{r}
+rm(list=ls(all=TRUE))
+df.t <- read.csv('data/tempExperiment_v2.csv')
+str(df.t)
+```
+
+
+```{r}
+df.t$temp <- factor(df.t$temp)
+
+#looking at the growth rate as a function of temperature and population
+boxplot(df.t$growthRate ~ df.t$temp + df.t$pop)
+
+
+#making the plot nicer:
+boxplot(df.t$growthRate ~ df.t$temp + df.t$pop,
+        names = c('10', '20', '10', '20'), #Temperature label
+        at = c(1, 2, 4, 5), # space out the boxes according to population
+        ylab = 'Growth rate mm/day',
+        xlab = ''
+)
+# Introducing the 'mtext' command to add margin text
+mtext('Pop 1', side = 1, at = 1.5, line = 3)
+mtext('Pop 2', side = 1, at = 4.5, line = 3)
+```
+
+
+
+
+```{r}
+#saving to a .pdf
+pdf('figures/MyBoxplot.pdf', width = 5, height = 5)
+# (just copying and pasting above code)
+boxplot(df.t$growthRate ~ df.t$temp + df.t$pop,
+        names = c('10', '20', '10', '20'), #Temperature label
+        at = c(1, 2, 4, 5), # space out the boxes according to population
+        ylab = 'Growth rate mm/day',
+        xlab = ''
+)
+# Introducing the 'mtext' command to add margin text
+mtext('Pop 1', side = 1, at = 1.5, line = 3)
+mtext('Pop 2', side = 1, at = 4.5, line = 3)
+dev.off()
+```
+
+
+```{r}
+#Checking if the effect of Population or the effect of Temperature is significant in our analysis using the ANOVA
+m1 <- aov(df.t$growthRate ~ df.t$temp * df.t$pop)
+# To see the results, use the "summary" command
+m1.summary <- summary(m1)
+m1.summary
+```
+
+#Checkpoint 4: How do we interpret this summary?
+#Looking at p values for temperature,population and interaction of both,
+#Only the effect of Temperature shows a slight significant trend. Neither Population nor the interaction between Temperature and Population has a statistically significant effect in this analysis. 
+#None of temperature and population significantly affects growth rate 
+
+
+
+#Checkpoint 5. What did we just do? We just learnt how to structure our codes in several scripts and also putting stuff into different folders.This helps with good organization.
+#Yes, I think this approach is easily editable and reproducible
+
+
+#Checkpoint 6. See if you can reproduce the “report.pdf” in markdown.
+#After so many try I was able to produce the report
+
+
+#Checkpoint 7. Now, see if your workflow works. What if you change a datapoint in the original data, run your driver, then remake the Markdown document?
+#Changing a data point in the original data, I was unable to remake the markdown document.
