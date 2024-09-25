@@ -1,0 +1,283 @@
+---
+title: "WK04_Bootstrap"
+author: "Isaac Sowah Badu"
+date: "2024-09-18"
+output: pdf_document
+---
+
+
+```{r,include = TRUE, echo= TRUE}
+library(knitr)
+opts_knit$set(root.dir = "C:/Users/sowai23/Desktop/Year_2_First sem/R stats/Files/R-class-2024/WK04_Bootstrap")
+```
+
+
+
+```{r}
+### modelling data with a normal distribution with 1000 observations
+x <- rnorm(1000)
+hist(x, freq = FALSE, ylim = c(0,2), xlim = c(-4,4), main = "1000 observations")
+```
+
+
+
+```{r}
+### modelling data with a normal distribution with 1000 observations
+x <- rnorm(1000)
+hist(x, freq = FALSE, ylim = c(0,2), xlim = c(-4,4), main = "1000 observations")
+
+#calculates the mean of that distribution 1000 times
+mean.x <- replicate(1000, mean(rnorm(1000)))
+hist(mean.x, add = TRUE, col = "blue", freq = FALSE)
+```
+#Checkpoint 1: Using the equations above, what is the region where 95% of the data points lie, and what is the region where there is a 95% chance that the mean of the population exists within it? How do these regions differ?
+
+
+```{r}
+s <-  sd(x)
+S.E <-  s/sqrt(1000)
+```
+
+
+```{r}
+m <- mean(x)
+m + 1.96 * s
+m - 1.96 * s
+m + 1.96*S.E
+m - 1.96*S.E
+```
+#The region where 95% of the data points lie is 1.927646 and -2.002638. The region where there is a 95% chance that the mean of the population exists within it is 0.0246475 and  -0.09963898. The first region tells us about the spread of the data (calculated with standard deviation), while the second focuses on the precision of the mean estimate (calculated with the standard error).
+
+
+
+```{r}
+### Now, let's do the same thing with only 25 observations
+x <- rnorm(25)
+hist(x, freq = FALSE, ylim = c(0,2), xlim = c(-4,4), main = "25 observations")
+
+### Now, let's calculate the mean of that distribution 1000 times
+mean.x <- replicate(1000, mean(rnorm(25)))
+hist(mean.x, add = TRUE, col = "blue", freq = FALSE)
+```
+
+
+
+#Checkpoint 2: Using the equations above, what is the region where 95% of the data points lie, and what is the region where there is a 95% chance that the mean of the population exists within it? How do these regions compare to the example in which we drew 1000 samples from the distribution?
+
+```{r}
+s <-  sd(x)
+S.E <-  s/sqrt(25)
+m <-  mean(x)
+```
+
+
+```{r}
+m + 1.96 * s
+m - 1.96 * s
+c(-1,1) * 1.96* S.E + m
+```
+
+#The region where 95% of the data points lie is 1.96797  and -1.774827. The region where there is a 95% chance that the mean of the population exists within it is -0.2777078 and  0.4708516. With 25 samples, the region will likely be wider and more variable compared to the case with 1000 samples, where the range is narrower due to the larger and more representative sample. Again with 25 samples, the confidence interval is significantly wider due to greater uncertainty in estimating the mean, while 1000 samples, the confidence interval is narrower, indicating more precision in estimating the population mean.
+
+
+
+```{r}
+# create the My.CI function:
+My.CI <- function(x.vect){
+
+# x.vect should be normally distributed
+sd.x <- sd(x.vect)
+n <- length(x.vect)
+se.x <- sd.x/sqrt(n)
+data.95.CI <- mean(x.vect)+1.96*c(-1,1)*sd.x
+mean.95.CI <- mean(x.vect)+1.96*c(-1,1)*se.x
+return(list(sd=sd.x, se=se.x, mean= mean(x.vect),
+data.95 = data.95.CI,
+mean.95 = mean.95.CI
+)
+)
+}
+```
+
+
+
+```{r}
+# now produce all the output from the functions on x
+My.CI(x)
+```
+
+
+```{r}
+#Bootstrap 
+
+#for loops
+for (i in 1:100){
+print(i)
+}
+```
+
+
+```{r}
+# creates an empty vector to store your output
+my.output <- c()
+my.input <- seq(53, 128, by=5)
+```
+
+
+```{r}
+#save it in my.output
+for (i in 1:length(my.input)){
+my.output[i] <- my.input[i]^2 + my.input[i]
+}
+my.output
+```
+
+
+```{r}
+#The sample() function This function is a great way to resample your data.
+my.input
+```
+
+
+```{r}
+# Let's resample the vector my.input with replacement
+sample(my.input, replace = TRUE)
+# Is this the same or different from my.input?
+#No, it is not the same 
+```
+
+
+```{r}
+# Let's resample the names of two groups 100 times, with different probabilities
+s1 <- sample(c("Group 1", "Group 2"), size = 100, replace = TRUE,prob = c(0.3, 0.7))
+table(s1)
+```
+
+
+```{r}
+#Bootstrap example
+# Upload the data
+fish.df <- read.csv("FishGrowthTemp.csv", header=TRUE)
+```
+
+
+```{r}
+# Plot the data
+par(mfrow=c(1,1))
+plot(fish.df$temp, fish.df$growth.rate,
+xlab = 'Temperature (C)', ylab = 'Growth Rate (mm/y)')
+abline(lm(fish.df$growth.rate~fish.df$temp))
+```
+
+
+```{r}
+# This model assumes residuals are normally distributed.
+ #Are they normally distributed? No they are not
+hist(lm(fish.df$growth.rate~fish.df$temp)$residuals,
+xlab = 'Growth Rate (mm/y)')
+```
+
+
+
+
+```{r}
+#This shows us the same thing in a different way.
+qqnorm(fish.df$growth.rate)
+qqline(fish.df$growth.rate)
+```
+
+
+```{r}
+# This is the slope we observe from a linear model (y = ax + b)
+lm(fish.df$growth.rate~fish.df$temp)$coef
+
+
+# Doing a statistical test:
+summary(lm(fish.df$growth.rate~fish.df$temp))
+```
+
+#Checkpoint 3: How do we interpret this statistical test given that our residuals are non-normal(and so the test isn’t valid)?
+#The statistical test suggests that the slope (2.234) is significant with a p-value of 0.0317, indicating a positive relationship between temperature and growth rate. however, since the residuals are non-normal, the results from the standard t-tests and F-tests (such as the p-value and t-value for the slope) may not be reliable. 
+
+
+```{r}
+#Doing a bootstrap to see if our slope is different from 0.
+# create a sample size
+n.boot <- 1000
+
+# filling it with
+slope <- rep(NA, n.boot)
+n.rows <- nrow(fish.df)
+
+# create the slopes
+for (i in 1:n.boot){
+new.rows <- sample(1:n.rows, replace=TRUE)
+new.data <- fish.df[new.rows,]
+slope[i] <- lm(new.data$growth.rate ~ new.data$temp)$coef[2]
+}
+
+# Let's look at our distribution of slope:
+hist(slope, breaks=100)
+
+```
+
+
+```{r}
+sort(slope)[n.boot*0.025] # Lower 95% CI on distribution
+
+sort(slope)[n.boot*0.975] # Upper 95% CI on distribution
+```
+
+#Checkpoint 4: What does the bootstrap analysis suggest about our data? What if we had done more bootstraps? Why is looking at the standard error useless in a bootstrap?
+
+#The bootstrap analysis suggests that the slope from the linear model (relationship between temperature and growth rate) could range from -0.221 to 5.062. Since 0 lies within this interval, it suggests that the relationship between temperature and growth rate may not be significantly different from zero, there might not be a strong relationship between the two variables. Doing more bootstraps would give us a more precise estimate of the confidence interval. In a bootstrap, the confidence interval is directly calculated from the distribution of the bootstrap samples. Therefore, there's no need to rely on a standard error, which assumes a normal distribution of the estimates.
+
+
+#Using bootstrapping to illustrate that the standard error works for the mean.
+```{r}
+n = 100000
+set.seed(1)
+x1 <- rpois(n/2, 2)
+x2 <- rpois(n/2, 19)
+data <- c(x1, -x2)
+hist(data, xlab = 'x', main = 'Really Non-normal data')
+```
+
+
+```{r}
+mean(data)
+set.seed(1)
+my.sample <- sample(data, 30, replace = TRUE)
+mean(my.sample)
+```
+
+
+```{r} 
+#working the confidence interval
+se <- sd(my.sample)/sqrt(length(my.sample))
+mean.95 <- mean(my.sample) + 1.96*c(-1,1)*se
+print(mean.95)
+```
+
+
+
+
+```{r} 
+# sampling distribution for the mean
+n.boot <- 10000
+mean.est <- rep(NA, n.boot)
+for (i in 1:n.boot){
+my.sample <- sample(data, 30, replace = TRUE)
+mean.est[i] <- mean(my.sample)
+}
+
+
+# The acutal 95% of sample means are in the range
+hist(mean.est, xlab = 'Sample Means')
+
+sort(mean.est)[n.boot*0.025] # Lower 95% CI on distribution
+sort(mean.est)[n.boot*0.975] # Upper 95% CI on distribution
+
+abline(v = c(sort(mean.est)[n.boot*0.025], sort(mean.est)[n.boot*0.975]),
+lty = 2, col = 'red')
+```
