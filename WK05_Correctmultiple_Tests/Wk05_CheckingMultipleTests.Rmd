@@ -1,0 +1,203 @@
+---
+title: "Wk5_CorrectMultipleTests"
+author: "Isaac Sowah Badu"
+date: "2024-09-25"
+output: pdf_document
+---
+
+```{r,include = TRUE, echo= TRUE}
+library(knitr)
+opts_knit$set(root.dir = "C:/Users/sowai23/Desktop/Year_2_First sem/R stats/Files/R-class-2024/WK05_Correctmultiple_Tests")
+```
+
+
+
+```{r}
+# Defining a function
+my.fun <- function(x){
+y <- x*5 + 1
+return(y)
+}
+
+
+# Using the function created
+my.fun(10)
+```
+
+
+```{r}
+# A function with two parameters
+my.fun2 <- function(x, a){
+y <- x*5 + 3^a
+return(y)
+}
+my.fun2(10, 5)
+
+```
+
+
+```{r}
+# What happens when you switch them around with, and without, specification? I got the same answers with or without specification
+my.fun2(a=5, x=10)
+## [1] 293
+```
+
+
+```{r}
+my.fun3 <- function(x){
+y <- x*5 + 3^a
+return(y)
+}
+```
+
+#Checkpoint 1: Call my.fun2(10) and my.fun3(10): what happens? Now, specify a <- 5, and call my.fun2(10) and myfun3(10) again. Which one works and why? What if x is also an object in R?
+
+
+```{r}
+##my.fun2(10)
+```
+
+
+```{r}
+#my.fun3(10)
+```
+
+#my.fun2(10) says argument "a" is missing, with no default and my.fun3(10) says object 'a' not found
+
+```{r}
+##specifying 
+a <- 5
+```
+
+
+
+```{r}
+my.fun2(10, 5)
+```
+
+
+```{r}
+##my.fun3(10, 5)
+```
+
+
+#my.fun2(10) now works but my.fun3(10) does not work. my.fun2(10) works now because we have given it an argument 5 which was initially missing. my.fun3(10) does not work because the function does not have an object a.
+
+
+```{r}
+my.fun3 <- function(x){
+y <- x*5 + 3^a
+return(y)
+}
+```
+
+
+```{r}
+#Writing the function called Bonf()
+Bonf <- function(p.vect) {
+  bonf1 <- 0.05 / length(p.vect)
+  return(data.frame(p.vect, Is.Sig= p.vect < bonf1))
+}
+
+#usage
+p.vect <- c(0.23, 0.02, 0.013, 0.045)
+Bonf(p.vect)
+```
+
+
+```{r}
+#Benjamini-Hotchberg
+BenHotch <- function(p.vect){
+rank.p <- rank(p.vect)
+n <- length(p.vect)
+rank.alpha<-rank.p*0.05/n
+sig.p <- max(p.vect[p.vect<rank.alpha])
+return(data.frame(p.vect, Is.Sig = p.vect<=sig.p))
+}
+```
+
+
+```{r}
+p.vect <- c(0.23, 0.02, 0.013, 0.045) 
+BenHotch(p.vect)
+```
+
+
+```{r}
+#if (!require("BiocManager", quietly = TRUE))
+#install.packages("BiocManager")
+#BiocManager::install("qvalue")
+```
+```{r}
+library(qvalue)
+```
+
+
+
+```{r,include = TRUE, echo= TRUE}
+library(knitr)
+opts_knit$set(root.dir = "C:/Users/sowai23/Desktop/Year_2_First sem/R stats/Files/R-Class-2024/WK05_Correctmultiple_Tests")
+```
+
+
+```{r}
+###Uploading the data
+df.p <- read.table("data/1R_P30_1351142954_453_1_NumPops=30_NumInd=20Bayenv2LFMMpca-1.Cpval", header=TRUE)
+```
+
+
+
+```{r}
+# A logical indicating if a locus is neutral (TRUE)
+IsNeut <- df.p$IsNeut[df.p$UseSNP] 
+
+# The p-value for each locus calculated by a program
+p.list <- df.p$K5.P[df.p$UseSNP] 
+
+### We can check the assumption that our p-values are uniformly distributed
+### by plotting a histogram:
+hist(df.p$K5.P)
+```
+
+
+
+```{r}
+##Comparing figure 1 in Storey and Tibshirani (2003), where there is only a small inflation at p<0.01.
+### Compare it to a histogram of p-values from a normal distribution:
+hist(pnorm(rnorm(1000)))
+```
+
+
+
+```{r}
+### Making a logical list of whether the q-values are <0.05
+q.out <- qvalue(p.list)$qvalue<0.05
+```
+
+
+```{r}
+#Creating a function called CorrectMultP() that takes a vector of p-values as input and outputs columns for the p-value, and a logical column each for whether it is significant by Bonferroni, BenHotch, or qvalue.
+CorrectMultP <- function(p.vect){
+return(data.frame(
+Bonf = Bonf(p.vect),
+BenHotch = BenHotch(p.vect),
+Qval = qvalue(p.vect)$qvalue<0.05))
+}
+
+out <- CorrectMultP(p.list)
+head(out)
+```
+
+```{r}
+### Calculate the number of significant tests
+sum(out$Bonf.Is.Sig)
+
+sum(out$BenHotch.Is.Sig)
+
+sum(out$Qval)
+```
+
+
+
+#Checkpoint 3: Which test is the most conservative? least conservative? The true dataset only had 100 loci under selection.
+#Bonferroni is the most conservative with the fewest significant result and q-value is the least conservative with most significant results.
